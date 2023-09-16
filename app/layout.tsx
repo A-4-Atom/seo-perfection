@@ -1,13 +1,8 @@
 'use client'
 import "./globals.css";
-import type { Metadata } from "next";
 import Frame from "react-frame-component";
 import { useSearchParams } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "SEO Perfection",
-  description: "Tool To check SEO performance of website.",
-};
 
 export default function RootLayout({
   children,
