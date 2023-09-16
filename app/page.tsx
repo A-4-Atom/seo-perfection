@@ -1,113 +1,148 @@
-import Image from 'next/image'
+"use client";
+import { useState } from "react";
+import Header from "@/components/Header";
+import PageDetails from "@/components/PageDetails";
+import Loader from "@/components/Loader";
+import axios from "axios";
+import { postArrayType, configType, apiDataType } from "@/types/types";
 
 export default function Home() {
+  const [loading, setLoading] = useState(false)
+  const [url, setUrl] = useState("");
+  const [data, setData] = useState<apiDataType>({
+    url: "",
+    fetch_time: "",
+    onpage_score: 94.15,
+    page_timing: {
+      time_to_interactive: 85,
+      waiting_time: 18,
+      download_time: 1,
+      dom_complete: 268,
+      largest_contentful_paint: 280.7,
+      time_to_secure_connection: 0
+    },
+    checks: {
+      title_too_short: true,
+      low_content_rate: true,
+      no_image_alt: true,
+      no_image_title: true,
+      canonical: true,
+      seo_friendly_url: true,
+      has_render_blocking_resources: true,
+    },
+    internal_links_count: 1,
+    external_links_count: 0,
+    images_count: 4,
+    images_size: 123808,
+    scripts_count: 9,
+    scripts_size: 409100,
+  });
+  const post_array: postArrayType = [
+    {
+      url: url,
+      enable_javascript: true,
+      load_resources: true,
+      enable_browser_rendering: true,
+    },
+  ];
+
+  const config: configType = {
+    method: "post",
+    url: "https://api.dataforseo.com/v3/on_page/instant_pages",
+    auth: {
+      username: process.env.NEXT_PUBLIC_DATAFORSEO_LOGIN as string,
+      password: process.env.NEXT_PUBLIC_DATAFORSEO_PASSWORD as string,
+    },
+    data: post_array,
+    headers: {
+      "content-type": "application/json",
+    },
+  };
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    setLoading(true)
+    event.preventDefault();
+    axios(config)
+      .then(function (res) {
+        let result = res["data"]["tasks"];
+        let formattedResult: apiDataType = {
+          url: url,
+          fetch_time: result[0].result[0].items[0].fetch_time,
+          onpage_score: result[0].result[0].items[0].onpage_score,
+          page_timing: {
+            time_to_interactive:
+              result[0].result[0].items[0].page_timing.time_to_interactive,
+            waiting_time: result[0].result[0].items[0].page_timing.waiting_time,
+            download_time:
+              result[0].result[0].items[0].page_timing.download_time,
+            time_to_secure_connection:
+              result[0].result[0].items[0].page_timing.time_to_connection,
+            dom_complete: result[0].result[0].items[0].page_timing.dom_complete,
+            largest_contentful_paint:
+              result[0].result[0].items[0].page_timing.largest_contentful_paint,
+          },
+          checks: {
+            title_too_short:
+              result[0].result[0].items[0].checks.title_too_short,
+            low_content_rate:
+              result[0].result[0].items[0].checks.low_content_rate,
+            no_image_alt: result[0].result[0].items[0].checks.no_image_alt,
+            no_image_title: result[0].result[0].items[0].checks.no_image_title,
+            canonical: result[0].result[0].items[0].checks.canonical,
+            seo_friendly_url:
+              result[0].result[0].items[0].checks.seo_friendly_url,
+            has_render_blocking_resources:
+              result[0].result[0].items[0].checks.has_render_blocking_resources,
+          },
+          internal_links_count:
+            result[0].result[0].items[0].meta.internal_links_count,
+          external_links_count:
+            result[0].result[0].items[0].meta.external_links_count,
+          images_count: result[0].result[0].items[0].meta.images_count,
+          images_size: result[0].result[0].items[0].meta.images_size,
+          scripts_count: result[0].result[0].items[0].meta.scripts_count,
+          scripts_size: result[0].result[0].items[0].meta.scripts_size,
+        };
+
+        setData(formattedResult);
+        setLoading(false)
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
+
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setUrl(event.target.value);
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="">
+      <Header />
+      <div className="w-full flex flex-col items-center">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col items-center gap-3 w-full"
+        >
+          <input
+            className="w-4/5 md:w-2/5 font-poppins p-1 bg-cyan-400 appearance-none border-2 border-cyan-200 rounded text-gray-700 placeholder-white focus:outline-none focus:bg-white focus:border-cyan-300"
+            type="url"
+            value={url}
+            onChange={handleChange}
+            placeholder="Enter an https:// URL:"
+            required
+          />
+          <button
+            type="submit"
+            className="text-lg font-poppins text-cyan-500 font-medium border border-cyan-600 rounded-md max-w-max px-5"
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+            Submit
+          </button>
+        </form>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      {
+        loading ? <Loader /> : data.url != "" && <PageDetails {...data} />
+      }
     </main>
-  )
+  );
 }
